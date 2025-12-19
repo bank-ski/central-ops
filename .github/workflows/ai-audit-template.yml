@@ -1,0 +1,59 @@
+name: 深度安全与逻辑审查模板 (GPT-5.1 Codex)
+
+# 【关键修改 1】必须使用 workflow_call 才能被其他仓库引用
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  pr_agent:
+    runs-on: ubuntu-latest
+    steps:
+      - name: PR Agent Action
+        uses: Codium-ai/pr-agent@main
+        env:
+          # 【关键修改 2】直接使用组织 Secret，无需在子仓库配置
+          OPENAI_KEY: ${{ secrets.OPAI }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+          CONFIG.MODEL: "gpt-5.1-codex"
+          PR_REVIEWER.LANGUAGE: "zh" 
+          
+          PR_REVIEWER.ADAPTIVE_REVIEW: "true" 
+          CONFIG.MAX_MODEL_TOKENS: 10000  
+          PR_REVIEWER.MAX_TOKENS_FOR_REVIEW: 100000
+
+          # --- 你的 12 条硬核审计准则（原封不动保留） ---
+          PR_REVIEWER.EXTRA_INSTRUCTIONS: |
+            # 重点：不要静默！
+              请务必对所有代码进行“有罪推定”审计。
+              哪怕只有 1% 的 NPE 风险，也必须列在【风险点】中。
+            ⚠️【输出约束 (极其重要)】
+            1. 始终使用简体中文输出。
+            2. 极其精简：只列出【有实际风险的点】。无风险则静默，不要提及没有问题的文件。
+            3. 拒绝废话：每个问题点直接指出风险后果和建议。
+            4. 格式：按文件路径分类，列出风险点。
+            5. 地毯式搜索：务必遍历每一行代码，找出所有潜在风险。
+
+            【重点审查内容清单】
+            1）安全：严查输入校验、SQL/命令注入、越权。日志绝对禁止泄露 Token/Cookie/Authorization/PII。
+            2）Token/Session 一致性：401 处理必须幂等，全局单例 logout。防止并发刷新导致 Token 失效或假登录。
+            3）代理与网关：Authorization 头必须强制转发；严查 authorization/Authorization 大小写识别问题。
+            4）前端状态同步：登录后即时写入持久化；401 处理不幂等导致的多次重复退出。
+            5）逻辑细节：禁止对 token/id/path 做大小写转换（toLowerCase/toUpperCase），API 路径必须严格匹配。
+            6）多标签页与抖动：处理 StorageEvent 确保 token 同步；网络切换时应重试而非直接强制退出。
+            7）Refresh Token：必须共享同一个 Promise 进行刷新防止风暴；刷新异常需有退避(backoff)机制。
+            8）缓存完整性：HTML 必须 network-first 避免白屏；SW 必须 skipWaiting。
+            9）后端性能：热点 key 限流；Lua 脚本超时；避免并发刷新产生的 token 风暴。
+            10）可观测性：必须携带 traceId；区分 401 与 403 来源。
+            11）误退出风险：严查非 401 错误码（如 500/404）误触发 logout。
+            12）后台任务：区分“活跃、刷新中、已注销”状态，禁止误清有效 token。
+
+          PR_REVIEWER.NUM_CODE_SUGGESTIONS: 0 
+          PR_REVIEWER.ENABLE_REVIEW_LABELS_SECURITY: "true"
+          PR_REVIEWER.REQUIRE_SCORE_REVIEW: "false"
+          PR_REVIEWER.PERSISTENT_COMMENT: "false"
