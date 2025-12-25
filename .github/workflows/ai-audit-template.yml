@@ -24,8 +24,8 @@ jobs:
           PR_REVIEWER.LANGUAGE: "zh" 
           
           PR_REVIEWER.ADAPTIVE_REVIEW: "true" 
-          CONFIG.MAX_MODEL_TOKENS: 10000  
-          PR_REVIEWER.MAX_TOKENS_FOR_REVIEW: 100000
+          CONFIG.MAX_MODEL_TOKENS: 20000  
+          PR_REVIEWER.MAX_TOKENS_FOR_REVIEW: 1000000
 
           # --- 你的核心指令集 ---
           PR_REVIEWER.EXTRA_INSTRUCTIONS: |
