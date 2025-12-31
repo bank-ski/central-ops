@@ -21,10 +21,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
           CONFIG.MODEL: "gpt-5.1-codex"
-          PR_REVIEWER.LANGUAGE: "zh" 
+          PR_REVIEWER.LANGUAGE: "zh"
           
-          PR_REVIEWER.ADAPTIVE_REVIEW: "true" 
-          CONFIG.MAX_MODEL_TOKENS: 20000  
+          PR_REVIEWER.ADAPTIVE_REVIEW: "true"
+          CONFIG.MAX_MODEL_TOKENS: 20000
           PR_REVIEWER.MAX_TOKENS_FOR_REVIEW: 1000000
 
           # --- 你的核心指令集 ---
@@ -62,7 +62,7 @@ jobs:
             11）误退出风险：严查非 401 错误码（如 500/404）误触发 logout。
             12）后台任务：区分“活跃、刷新中、已注销”状态，禁止误清有效 token。
 
-          PR_REVIEWER.NUM_CODE_SUGGESTIONS: 0 
+          PR_REVIEWER.NUM_CODE_SUGGESTIONS: 0
           PR_REVIEWER.ENABLE_REVIEW_LABELS_SECURITY: "true"
           PR_REVIEWER.REQUIRE_SCORE_REVIEW: "false"
           PR_REVIEWER.PERSISTENT_COMMENT: "false"
