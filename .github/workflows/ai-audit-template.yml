@@ -1,6 +1,62 @@
-name: Debug
-on: workflow_call
+name: Deep Security Audit (GPT-5.1 Codex)
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
-  test:
+  pr_agent:
     runs-on: ubuntu-latest
-    steps: [{run: echo "OK"}]
+    steps:
+      - name: PR Agent Action
+        uses: Codium-ai/pr-agent@main
+        env:
+          # Secret inheritance
+          OPENAI_KEY: ${{ secrets.OPAI }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+          # Model Config
+          CONFIG.MODEL: "gpt-5.1-codex"
+          PR_REVIEWER.LANGUAGE: "zh"
+          PR_REVIEWER.ADAPTIVE_REVIEW: "true"
+          CONFIG.MAX_MODEL_TOKENS: 20000
+          PR_REVIEWER.MAX_TOKENS_FOR_REVIEW: 1000000
+
+          # --- Core Audit Instructions ---
+          PR_REVIEWER.EXTRA_INSTRUCTIONS: |
+            # ROLE: Logic Audit Expert (NOT a Compiler)
+            1. CONTEXT: You only see Diff. Ignore 'Missing Import' or 'Undefined Symbol'.
+            2. FOCUS: Only report logic bugs, security risks, and NPEs.
+            3. IGNORE: Syntax errors, missing packages.
+
+            # AUDIT ATTITUDE: Guilty Until Proven Innocent
+            - Report even 1% risk of NPE.
+            - Assume external data is malicious.
+
+            # OUTPUT RULES
+            1. Language: Simplified Chinese (zh-CN).
+            2. Format: File path -> Risk points.
+            3. Style: Concise, no fluff.
+
+            # CHECKLIST (The 12 Iron Rules)
+            1. Security: SQLi, XSS, IDOR. NO Token/PII in logs.
+            2. Token/Session: 401 must be idempotent. Single global logout.
+            3. Gateway: Forward 'Authorization'. Check case-sensitivity.
+            4. Sync: Persist login state immediately.
+            5. Logic: No toLowerCase/toUpperCase on IDs/Tokens. Strict path matching.
+            6. Tabs: Sync via StorageEvent. Retry on network switch.
+            7. Refresh Token: Share Promise to prevent storm. Backoff on fail.
+            8. Cache: HTML network-first. ServiceWorker skipWaiting.
+            9. Performance: Rate limit hot keys. Lua script timeout.
+            10. Observability: TraceId required. Distinguish 401 source.
+            11. Error Handling: Non-401 (500/404) must NOT trigger logout.
+            12. Background: Handle 'active/refreshing/logged-out' states.
+
+          PR_REVIEWER.NUM_CODE_SUGGESTIONS: 0
+          PR_REVIEWER.ENABLE_REVIEW_LABELS_SECURITY: "true"
+          PR_REVIEWER.REQUIRE_SCORE_REVIEW: "false"
+          PR_REVIEWER.PERSISTENT_COMMENT: "false"
