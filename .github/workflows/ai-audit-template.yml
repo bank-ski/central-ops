@@ -48,7 +48,7 @@ jobs:
             2. Format: File path -> Risk points.
             3. Style: Concise, no fluff.
 
-            # CHECKLIST (The 12 Iron Rules)
+            # CHECKLIST (The 13 Iron Rules)
             1. Security: SQLi, XSS, IDOR. NO Token/PII in logs.
             2. Token/Session: 401 must be idempotent. Single global logout.
             3. Gateway: Forward 'Authorization'. Check case-sensitivity.
@@ -58,9 +58,10 @@ jobs:
             7. Refresh Token: Share Promise to prevent storm. Backoff on fail.
             8. Cache: HTML network-first. ServiceWorker skipWaiting.
             9. Performance: Rate limit hot keys. Lua script timeout.
-            10. Observability: TraceId required. Distinguish 401 source.
-            11. Error Handling: Non-401 (500/404) must NOT trigger logout.
-            12. Background: Handle 'active/refreshing/logged-out' states.
+            10. Redis Cluster: Assume Redis is deployed in cluster mode. Check hash slot consistency, multi-key operations on cross-slot keys, pipeline/MGET/MSET/Lua limitations, distributed lock safety, hot key amplification, resharding/migration compatibility, and no reliance on single-node commands or global key scans.
+            11. Observability: TraceId required. Distinguish 401 source.
+            12. Error Handling: Non-401 (500/404) must NOT trigger logout.
+            13. Background: Handle 'active/refreshing/logged-out' states.
 
           PR_REVIEWER.NUM_CODE_SUGGESTIONS: 0
           PR_REVIEWER.ENABLE_REVIEW_LABELS_SECURITY: "true"
