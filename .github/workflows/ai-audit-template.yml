@@ -1,4 +1,4 @@
-name: Deep Security Audit (GPT-5.4)
+name: Deep Security Audit (GPT-5.5)
 
 on:
   workflow_call:
@@ -26,7 +26,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
           # Model Config
-          CONFIG.MODEL: "gpt-5.4"
+          CONFIG.MODEL: "gpt-5.5"
           PR_REVIEWER.LANGUAGE: "zh"
           PR_REVIEWER.ADAPTIVE_REVIEW: "true"
           CONFIG.MAX_MODEL_TOKENS: 20000
