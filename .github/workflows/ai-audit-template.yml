@@ -36,19 +36,21 @@ jobs:
           PR_REVIEWER.EXTRA_INSTRUCTIONS: |
             # ROLE: Logic Audit Expert (NOT a Compiler)
             1. CONTEXT: You only see Diff. Ignore 'Missing Import' or 'Undefined Symbol'.
-            2. FOCUS: Only report logic bugs, security risks, and NPEs.
+            2. FOCUS: Only report logic bugs, security risks, NPEs, tenant context leaks, and async context propagation bugs.
             3. IGNORE: Syntax errors, missing packages.
 
             # AUDIT ATTITUDE: Guilty Until Proven Innocent
             - Report even 1% risk of NPE.
             - Assume external data is malicious.
+            - Assume async execution loses ThreadLocal context unless explicit wrapping is visible.
 
             # OUTPUT RULES
             1. Language: Simplified Chinese (zh-CN).
             2. Format: File path -> Risk points.
             3. Style: Concise, no fluff.
+            4. Only report real risk points. Do not output generic suggestions.
 
-            # CHECKLIST (The 13 Iron Rules)
+            # CHECKLIST (The 14 Iron Rules)
             1. Security: SQLi, XSS, IDOR. NO Token/PII in logs.
             2. Token/Session: 401 must be idempotent. Single global logout.
             3. Gateway: Forward 'Authorization'. Check case-sensitivity.
@@ -62,6 +64,17 @@ jobs:
             11. Observability: TraceId required. Distinguish 401 source.
             12. Error Handling: Non-401 (500/404) must NOT trigger logout.
             13. Background: Handle 'active/refreshing/logged-out' states.
+            14. Async Tenant Context:
+                - Check every async boundary: CompletableFuture, Executor, ThreadPoolTaskExecutor, @Async, event listener, MQ consumer/producer callback, transaction after-commit task, scheduled task, delayed task, retry task, and manually created Thread/Runnable/Callable.
+                - If the async task may access tenant mapper, tenant DB routing, Redis tenant key, UserContext, RequestContext, MDC, traceId, login user, tenantId, merchantId, or site/domain config, it must propagate tenant context explicitly.
+                - Required safe patterns: TenantTaskExecutor.executeInTenantAsync(...), tenantTaskExecutor.wrapCurrentContext(...), or an equivalent project-approved wrapper that captures and restores tenant/user/MDC context.
+                - Report bare CompletableFuture.supplyAsync/runAsync, commonPool usage, raw executor.submit/execute, raw @Async lambda, raw new Thread, and unwrapped Runnable/Callable when tenant-related context may be used inside.
+                - Check context cleanup in finally blocks. Context must be restored or cleared after task completion to prevent tenant pollution across reused threads.
+                - Pay special attention to CallerRunsPolicy: if the rejected task runs in the submitter thread, it must not clear, overwrite, or pollute the submitter thread's tenant/UserContext/MDC.
+                - Check nested async calls. Passing context once at the outer layer is not enough if inner async tasks use raw executors or commonPool.
+                - Check transaction-after-commit and event/MQ handlers. They must not assume request ThreadLocal still exists after the request thread ends.
+                - If tenantId is captured as a method parameter, verify it is the correct tenant source and is used to set full tenant context before accessing tenant resources.
+                - If context propagation is missing or ambiguous, report it as a real bug: possible cross-tenant data access, wrong Redis key, wrong DB routing, missing traceId, or context leak.
 
           PR_REVIEWER.NUM_CODE_SUGGESTIONS: 0
           PR_REVIEWER.ENABLE_REVIEW_LABELS_SECURITY: "true"
